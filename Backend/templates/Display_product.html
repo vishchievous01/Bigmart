@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="col-lg-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Product Details</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Category</th>
+                          <th>Product Name</th>
+                          <th>Price</th>
+                          <th>Description</th>
+                          <th>Product Image</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      {% for i in data %}
+                        <tr>
+                         <td>{{i.Category}}</td>
+                         <td>{{i.P_name}}</td>
+                         <td>{{i.Price}}</td>
+                         <td>{{i.Description}}</td>
+                            <td>
+                               <img src="{{i.P_image.url}}">
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_product' proid=i.id %}">
+                                    <button type="button" class="btn btn-inverse-dark btn-fw">Edit</button>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'delete_product' proid=i.id %}">
+                                    <button type="button" class="btn btn-inverse-dark btn-fw">Delete</button>
+                                </a>
+                            </td>
+                        </tr>
+                      {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+</body>
+</html>
+{% endblock %}
