@@ -3,16 +3,33 @@ from Backend.models import BigmartDb, ProductDb
 from django.core.files.storage import FileSystemStorage
 from django.utils.datastructures import MultiValueDictKeyError
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from WebApp.models import ContactDb
 from django.contrib import messages
+from .models import AdminProfile
+from .forms import AdminImageForm
+from .forms import AdminImageForm
+from .models import AdminProfile
 
 
 # Create your views here.
 
-def index_page(req):
-    return render(req, "index.html")
+def index_page(request):
+    profile, created = AdminProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = AdminImageForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('index_page')  # Always redirect after POST
+    else:
+        form = AdminImageForm(instance=profile)
+    return render(request, 'index.html', {'form': form, 'profile': profile})
 
+def dashboard_page(request):
+    return render(request, "dashboard.html")
+
+def admin_profile_view(request):
+    return render(request, "admin_profile.html")
 
 def category_page(req):
     return render(req, "Category.html")
@@ -54,7 +71,7 @@ def update_category(request, catid):
     return redirect(display_category)
 
 
-def delete_category(request ,catid):
+def delete_category(request, catid):
     data = BigmartDb.objects.filter(id=catid)
     data.delete()
     messages.error(request, "Deleted..!")
@@ -67,28 +84,37 @@ def login_page(request):
 
 def admin_page(request):
     if request.method == "POST":
-        un = request.POST.get('username')
-        pwd = request.POST.get('password')
-        if User.objects.filter(username__contains=un).exists():
-            x = authenticate(username=un, password=pwd)
-            if x is not None:
-                login(request, x)
-                request.session['username'] = un
-                request.session['password'] = pwd
-                messages.success(request, "Welcome..!")
-                return redirect(index_page)
-            else:
-                messages.error(request, "Invalid password...!")
-                return redirect(login_page)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Welcome, {username}!")
+            return redirect(index_page)  # Replace with your dashboard or home
         else:
-            messages.warning(request, "User not found..!")
+            messages.error(request, "Invalid username or password.")
             return redirect(login_page)
+
+    return render(request, "admin_login.html")
 
 
 def AdminLogout(request):
-    del request.session['username']
-    del request.session['password']
+    logout(request)
+    messages.info(request, "You have been logged out.")
     return redirect(login_page)
+
+
+def edit_admin_image(request):
+    profile = AdminProfile.objects.get(user=request.user)
+    if request.method == 'POST':
+        form = AdminImageForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('admin_page')  # or wherever you want
+    else:
+        form = AdminImageForm(instance=profile)
+    return render(request, 'edit_admin_image.html', {'form': form, 'profile': profile})
 
 
 def product_page(req):
@@ -150,9 +176,3 @@ def delete_contact(x, delid):
     x = ContactDb.objects.filter(id=delid)
     x.delete()
     return redirect(contact_details)
-
-
-
-
-
-
